@@ -1,6 +1,7 @@
 // frontend/src/App.jsx
 import { useEffect, useState } from "react";
 import { uploadFile, listFiles, deleteFile } from "./api";
+import { toast, ToastContainer } from "react-toastify";
 
 function App() {
   const [files, setFiles] = useState([]);
@@ -41,6 +42,7 @@ function App() {
         setMessage(data.error || "Failed to upload file");
       } else {
         setMessage(data.message || "File uploaded");
+        toast.success("file uploaded")
         fetchFiles();
         e.target.reset();
       }
@@ -157,11 +159,23 @@ function App() {
                       </td>
                       <td className="px-4 py-2">
                         <div className="flex justify-end gap-2">
+                          {/* View button */}
+    <a
+      href={`http://localhost:5000/documents/${doc._id}`}
+      target="_blank"
+      rel="noopener noreferrer"
+      className="inline-flex items-center px-3 py-1 rounded-full text-xs
+                 font-medium border border-green-200 text-green-700
+                 hover:bg-green-50"
+    >
+      View
+    </a>
                           <a
                             href={`http://localhost:5000/documents/${doc._id}`}
                             className="inline-flex items-center px-3 py-1 rounded-full text-xs
                                        font-medium border border-indigo-200 text-indigo-700
                                        hover:bg-indigo-50"
+                                       title="Download"
                           >
                             Download
                           </a>
@@ -171,6 +185,7 @@ function App() {
                             className="inline-flex items-center px-3 py-1 rounded-full text-xs
                                        font-medium border border-rose-200 text-rose-700
                                        hover:bg-rose-50"
+                                        title="Delete"
                           >
                             Delete
                           </button>
@@ -184,6 +199,7 @@ function App() {
           )}
         </section>
       </div>
+      <ToastContainer />
     </div>
   );
 }
