@@ -8,19 +8,20 @@ import Document from "../models/Document.js";
 
 const router = express.Router();
 
-// Fix __dirname support
+// Fix __dirname support in ES modules
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-// Ensure uploads folder exists
-const uploadDir = path.resolve(__dirname, "../uploads");
+// Store uploads in backend/uploads
+const uploadDir = path.resolve(__dirname, "../../uploads");
 if (!fs.existsSync(uploadDir)) {
   fs.mkdirSync(uploadDir, { recursive: true });
 }
 
 const storage = multer.diskStorage({
   destination: (req, file, cb) => cb(null, uploadDir),
-  filename: (req, file, cb) => cb(null, Date.now() + "-" + file.originalname)
+  filename: (req, file, cb) =>
+    cb(null, Date.now() + "-" + file.originalname)
 });
 
 const fileFilter = (req, file, cb) => {
@@ -30,10 +31,12 @@ const fileFilter = (req, file, cb) => {
 
 const upload = multer({ storage, fileFilter });
 
-// Upload document
+// POST /documents/upload  - upload single PDF
 router.post("/upload", upload.single("file"), async (req, res) => {
   try {
-    if (!req.file) return res.status(400).json({ error: "No file uploaded" });
+    if (!req.file) {
+      return res.status(400).json({ error: "No file uploaded" });
+    }
 
     const doc = await Document.create({
       filename: req.file.filename,
@@ -48,7 +51,7 @@ router.post("/upload", upload.single("file"), async (req, res) => {
   }
 });
 
-// Get all documents
+// GET /documents  - list all
 router.get("/", async (req, res) => {
   try {
     const docs = await Document.find().sort({ createdAt: -1 });
@@ -59,16 +62,42 @@ router.get("/", async (req, res) => {
   }
 });
 
-// Download document
+// Helper to resolve file path
+const getFilePath = async (id) => {
+  const doc = await Document.findById(id);
+  if (!doc) return { error: "Document not found" };
+
+  const filePath = path.join(uploadDir, doc.filename);
+  if (!fs.existsSync(filePath)) {
+    return { error: "Stored file missing" };
+  }
+
+  return { doc, filePath };
+};
+
+// GET /documents/:id/view  - view PDF in browser
+router.get("/:id/view", async (req, res) => {
+  try {
+    const { doc, filePath, error } = await getFilePath(req.params.id);
+    if (error) return res.status(404).json({ error });
+
+    res.setHeader("Content-Type", "application/pdf");
+    res.setHeader(
+      "Content-Disposition",
+      `inline; filename="${doc.originalName}"`
+    );
+    res.sendFile(filePath);
+  } catch (err) {
+    console.error("View failed:", err);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
+// GET /documents/:id  - download PDF (spec endpoint)
 router.get("/:id", async (req, res) => {
   try {
-    const doc = await Document.findById(req.params.id);
-    if (!doc) return res.status(404).json({ error: "Document not found" });
-
-    const filePath = path.join(uploadDir, doc.filename);
-    if (!fs.existsSync(filePath)) {
-      return res.status(404).json({ error: "Stored file missing" });
-    }
+    const { doc, filePath, error } = await getFilePath(req.params.id);
+    if (error) return res.status(404).json({ error });
 
     res.download(filePath, doc.originalName);
   } catch (err) {
@@ -77,7 +106,7 @@ router.get("/:id", async (req, res) => {
   }
 });
 
-// Delete document
+// DELETE /documents/:id  - delete file + record
 router.delete("/:id", async (req, res) => {
   try {
     const doc = await Document.findById(req.params.id);

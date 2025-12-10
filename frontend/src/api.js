@@ -1,4 +1,3 @@
-// frontend/src/api.js
 export const API_URL = "http://localhost:5000/documents";
 
 export async function uploadFile(file) {

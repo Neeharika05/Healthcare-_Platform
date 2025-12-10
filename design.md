@@ -91,10 +91,3 @@ Appendix — Notes and corrections I applied to repository
 - Frontend `frontend/src/api.js`: updated upload function to use `files` as the multipart field and support single or multiple files. This aligns the frontend with backend route `upload.array('files', 10)`.
 
 - `README.md` (root): added run instructions and sample curl commands matching implemented endpoints and form field `files`.
-
-If you'd like, I can:
-- Replace MongoDB with SQLite (Knex or Sequelize) so the project uses a relational DB as requested in the assignment.
-- Add `design.pdf` instead of `design.md` or add per-folder README files.
-- Add server-side file size limits and better error messages.
-
-Tell me which of the optional follow-ups you want me to implement next.

@@ -22,8 +22,7 @@ app.use(cors());
 app.use(express.json());
 app.use(morgan("dev"));
 
-// Optional static serving for uploaded files
-// app.use("/uploads", express.static(path.join(__dirname, "uploads")));
+// app.use("/uploads", express.static(path.join(__dirname, "../uploads")));
 
 // Routes
 app.use("/documents", documentsRouter);
